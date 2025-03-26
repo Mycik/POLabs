@@ -1,9 +1,11 @@
 ﻿using System.Diagnostics;
+using System.Text;
 
 class Program
 {
     static void Main()
     {
+        Console.OutputEncoding = Encoding.Unicode;
         Console.Write("Введіть розмір масиву: ");
         var n = int.Parse(Console.ReadLine()!);
 
@@ -56,17 +58,79 @@ class Program
 
     private static (int count, int min) CountMultiplesOf17Sequential(int[] array)
     {
-        return (0, -1);
+        var count = 0;
+        var min = int.MaxValue;
+
+        foreach (var num in array)
+        {
+            if (num % 17 != 0) continue;
+            count++;
+            if (num < min)
+                min = num;
+        }
+
+        return count > 0 ? (count, min) : (0, -1);
     }
     
     private static (int count, int min) CountMultiplesOf17WithLock(int[] array, int threads)
     {
-        return (0, -1);
+        var count = 0;
+        var min = int.MaxValue;
+        var locker = new object();
+        var n = array.Length;
+
+        Parallel.For(0, threads, new ParallelOptions { MaxDegreeOfParallelism = threads }, t =>
+        {
+            var chunkSize = n / threads;
+            var start = t * chunkSize;
+            var end = (t == threads - 1) ? n : start + chunkSize;
+
+            for (var i = start; i < end; i++)
+            {
+                if (array[i] % 17 != 0) continue;
+                lock (locker)
+                {
+                    count++;
+                    if (array[i] < min)
+                        min = array[i];
+                }
+            }
+        });
+
+        return count > 0 ? (count, min) : (0, -1);
     }
     
     private static (int count, int min) CountMultiplesOf17WithCas(int[] array, int threads)
     {
-        return (0, -1);
+        var n = array.Length;
+        var atomicCount = 0;
+        var atomicMin = int.MaxValue;
+
+        Parallel.For(0, threads, new ParallelOptions { MaxDegreeOfParallelism = threads }, t =>
+        {
+            var chunkSize = n / threads;
+            var start = t * chunkSize;
+            var end = (t == threads - 1) ? n : start + chunkSize;
+
+            for (var i = start; i < end; i++)
+            {
+                var val = array[i];
+                if (val % 17 != 0) continue;
+                // Atomic increment
+                Interlocked.Increment(ref atomicCount);
+
+                // Atomic min
+                int currentMin;
+                do
+                {
+                    currentMin = atomicMin;
+                    if (val >= currentMin) break;
+                }
+                while (Interlocked.CompareExchange(ref atomicMin, val, currentMin) != currentMin);
+            }
+        });
+
+        return atomicCount > 0 ? (atomicCount, atomicMin) : (0, -1);
     }
 
 }
