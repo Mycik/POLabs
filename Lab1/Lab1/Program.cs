@@ -6,12 +6,56 @@ class Program
     private static void Main()
     {
         Console.OutputEncoding = Encoding.Unicode;
+        
+        Console.Write("Введіть 1 - якщо хочете ввести числа вручну, 0 - якщо для лабораторної: ");
+        var inputCase = int.Parse(Console.ReadLine()!);
+
+        switch (inputCase)
+        {
+            case 0: LabsInput(); break;
+            case 1: UserInput(); break;
+        }
+    }
+
+    private static void LabsInput()
+    {
+        var nValues = new[] { 100, 500, 1000, 2500, 5000, 10000 };
+        var sValues = new[] { 4, 8, 16, 32, 64, 128, 256 };
+
+        Console.WriteLine("\n--- Без паралелізації ---");
+        Console.WriteLine("Розмірність | Час (мс)");
+        Console.WriteLine("------------------------");
+
+        foreach (var nValue in nValues)
+        {
+            var matrix = GenerateRandomMatrix(nValue);
+            var timeSequential = MeasureTime(() => ReflectOverAntiDiagonal(matrix));
+            Console.WriteLine($"{nValue,10} | {timeSequential.TotalMilliseconds,8:F3}");
+        }
+
+        Console.WriteLine("\n--- З паралелізацією ---");
+        Console.WriteLine("Розмірність | Потоки | Час (мс)");
+        Console.WriteLine("------------------------------");
+
+        foreach (var sValue in sValues)
+        {
+            foreach (var nValue in nValues)
+            {
+                var matrix = GenerateRandomMatrix(nValue);
+                var timeParallel = MeasureTime(() => ReflectOverAntiDiagonalParallel(matrix, sValue));
+                Console.WriteLine($"{nValue,10} | {sValue,6} | {timeParallel.TotalMilliseconds,8:F3}");
+            }
+        }
+    }
+
+    private static void UserInput()
+    {
         Console.Write("Введіть розмірність матриці n: ");
         var n = int.Parse(Console.ReadLine()!);
 
         var matrix = GenerateRandomMatrix(n);
         Console.WriteLine("\n--- Початкова матриця ---");
-        //PrintMatrix(matrix);
+        PrintMatrix(matrix);
 
         Console.WriteLine("\n--- Звичайне відображення ---");
         var matrixCopy = (int[,])matrix.Clone();

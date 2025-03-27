@@ -13,6 +13,7 @@ class Program
         var threads = int.Parse(Console.ReadLine()!);
 
         var array = GenerateRandomArray(n);
+        //foreach (var ar in array) Console.WriteLine(ar);
 
         Console.WriteLine("\n--- Послідовна версія ---");
         var time1 = MeasureTime(() =>

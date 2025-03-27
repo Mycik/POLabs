@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\musii\\RiderProjects\\Lab1\\Lab1\\Lab1.csproj": {}
+    "C:\\Users\\musii\\POLabs\\Lab1\\Lab1\\Lab1.csproj": {}
   },
   "projects": {
-    "C:\\Users\\musii\\RiderProjects\\Lab1\\Lab1\\Lab1.csproj": {
+    "C:\\Users\\musii\\POLabs\\Lab1\\Lab1\\Lab1.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\musii\\RiderProjects\\Lab1\\Lab1\\Lab1.csproj",
+        "projectUniqueName": "C:\\Users\\musii\\POLabs\\Lab1\\Lab1\\Lab1.csproj",
         "projectName": "Lab1",
-        "projectPath": "C:\\Users\\musii\\RiderProjects\\Lab1\\Lab1\\Lab1.csproj",
+        "projectPath": "C:\\Users\\musii\\POLabs\\Lab1\\Lab1\\Lab1.csproj",
         "packagesPath": "C:\\Users\\musii\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\musii\\RiderProjects\\Lab1\\Lab1\\obj\\",
+        "outputPath": "C:\\Users\\musii\\POLabs\\Lab1\\Lab1\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\musii\\AppData\\Roaming\\NuGet\\NuGet.Config"
