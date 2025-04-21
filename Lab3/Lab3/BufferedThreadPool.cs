@@ -2,7 +2,7 @@
 
 public class BufferedThreadPool
 {
-    private const int QueueCycleTime = 40000;
+    private const int QueueCycleTime = 40;
     private const int MaxCycleSummaryTaskTime = 60000;
     
     private readonly object _lock = new();
@@ -69,8 +69,13 @@ public class BufferedThreadPool
     {
         while (_running)
         {
+            var switchTime = DateTime.UtcNow.AddSeconds(QueueCycleTime);
             Console.WriteLine("[State] Очікування 40 секунд для збору задач...");
-            Thread.Sleep(QueueCycleTime);
+
+            while (_running && DateTime.UtcNow < switchTime)
+            {
+                Thread.Sleep(100);
+            }
 
             lock (_lock)
             {
@@ -82,28 +87,16 @@ public class BufferedThreadPool
                 Monitor.PulseAll(_lock);
             }
 
-            bool done;
-            do
-            {
-                Thread.Sleep(500);
-                lock (_lock)
-                {
-                    if (!_running) return;
-                    done = _currentQueue.Count == 0;
-                }
-            } while (!done);
-
             lock (_lock)
             {
                 _canExecute = false;
-                Console.WriteLine("[State] Поточна черга виконана. Переходимо до наступної.");
+                Console.WriteLine("[State] Переходимо до наступної черги, не чекаючи завершення задач.");
                 while (_nextQueue.Count > 0)
                     _currentQueue.Enqueue(_nextQueue.Dequeue());
                 _executing = false;
             }
         }
     }
-
 
     private void Worker()
     {
