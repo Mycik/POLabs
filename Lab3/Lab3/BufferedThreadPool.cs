@@ -28,11 +28,17 @@ public class BufferedThreadPool
 
     public void Stop()
     {
+        Console.WriteLine("[Shutdown] Завершення пулу задач...");
+    
         _running = false;
+
         lock (_lock)
-        {
             Monitor.PulseAll(_lock);
-        }
+
+        foreach (var worker in _workers.Where(worker => worker.IsAlive))
+            worker.Join();
+
+        Console.WriteLine("[Shutdown] Усі воркери завершені.");
     }
 
     public bool Enqueue(ThreadPoolTask task)
@@ -68,6 +74,8 @@ public class BufferedThreadPool
 
             lock (_lock)
             {
+                if (!_running) return;
+
                 _executing = true;
                 _canExecute = true;
                 Console.WriteLine("[State] Починається виконання поточної черги.");
@@ -80,6 +88,7 @@ public class BufferedThreadPool
                 Thread.Sleep(500);
                 lock (_lock)
                 {
+                    if (!_running) return;
                     done = _currentQueue.Count == 0;
                 }
             } while (!done);
@@ -94,6 +103,7 @@ public class BufferedThreadPool
             }
         }
     }
+
 
     private void Worker()
     {

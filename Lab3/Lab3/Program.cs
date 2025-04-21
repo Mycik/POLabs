@@ -5,6 +5,8 @@ namespace Lab3;
 internal static class Program
 {
     private static readonly Random Rng = new();
+    private static bool _generatorsRunning = true;
+    private static readonly List<Thread> Generators = new();
 
     private static void Main()
     {
@@ -24,29 +26,41 @@ internal static class Program
 
         for (var i = 0; i < 3; i++)
         {
-            new Thread(() =>
+            var thread = new Thread(() =>
             {
-                while (true)
+                while (_generatorsRunning)
                 {
                     var time = Rng.Next(taskTimeMin, taskTimeMax);
                     var task = new ThreadPoolTask
                     {
                         ExecutionTimeMs = time,
-                        Action = () =>
-                            Console.WriteLine(
-                                $"[Task] Виконується задача потоку #{Environment.CurrentManagedThreadId} ({time} мс)")
+                        Action = () => Console.WriteLine($"[Task] Виконується задача потоку #{Environment.CurrentManagedThreadId} ({time} мс)")
                     };
 
                     var accepted = pool.Enqueue(task);
                     if (!accepted)
-                        Console.WriteLine(
-                            $"[Rejected] Задача {task.GuidIndex} відхилена: перевищення ліміту 60 секунд.");
+                        Console.WriteLine($"[Rejected] Задача {task.GuidIndex} відхилена: перевищення ліміту 60 секунд.");
+                    
                     Thread.Sleep(Rng.Next(threadsSleepMin, threadsSleepMax));
                 }
-            }).Start();
+
+                Console.WriteLine($"[Generator] Потік #{Environment.CurrentManagedThreadId} завершено.");
+            });
+
+            Generators.Add(thread);
+            thread.Start();
         }
 
+        Console.WriteLine("Натисніть Enter для завершення...");
         Console.ReadLine();
+
+        _generatorsRunning = false;
+
+        foreach (var gen in Generators)
+            gen.Join();
+
         pool.Stop();
+
+        Console.WriteLine("Програму завершено коректно.");
     }
 }
