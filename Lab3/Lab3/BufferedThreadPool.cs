@@ -4,7 +4,7 @@ public class BufferedThreadPool
 {
     private const int QueueCycleTime = 40;
     private const int MaxCycleSummaryTaskTime = 60000;
-    
+
     private readonly object _lock = new();
     private readonly List<Thread> _workers = new();
     private readonly Queue<ThreadPoolTask> _currentQueue = new();
@@ -13,6 +13,7 @@ public class BufferedThreadPool
     private bool _running = true;
     private bool _executing;
     private bool _canExecute;
+    private bool _paused;
 
     public BufferedThreadPool(int workerCount)
     {
@@ -29,8 +30,9 @@ public class BufferedThreadPool
     public void Stop()
     {
         Console.WriteLine("[Shutdown] Завершення пулу задач...");
-    
+
         _running = false;
+        _paused = false;
 
         lock (_lock)
             Monitor.PulseAll(_lock);
@@ -39,6 +41,25 @@ public class BufferedThreadPool
             worker.Join();
 
         Console.WriteLine("[Shutdown] Усі воркери завершені.");
+    }
+
+    public void Pause()
+    {
+        lock (_lock)
+        {
+            _paused = true;
+            Console.WriteLine("[Pause] Виконання пулу поставлено на паузу.");
+        }
+    }
+
+    public void Resume()
+    {
+        lock (_lock)
+        {
+            _paused = false;
+            Console.WriteLine("[Resume] Виконання пулу поновлено.");
+            Monitor.PulseAll(_lock);
+        }
     }
 
     public bool Enqueue(ThreadPoolTask task)
@@ -81,6 +102,11 @@ public class BufferedThreadPool
             {
                 if (!_running) return;
 
+                while (_paused)
+                {
+                    Monitor.Wait(_lock);
+                }
+
                 _executing = true;
                 _canExecute = true;
                 Console.WriteLine("[State] Починається виконання поточної черги.");
@@ -117,6 +143,17 @@ public class BufferedThreadPool
 
             if (task != null)
             {
+                lock (_lock)
+                {
+                    while (_paused && _running)
+                    {
+                        Console.WriteLine($"[Pause] Потік {Environment.CurrentManagedThreadId} очікує зняття паузи.");
+                        Monitor.Wait(_lock);
+                    }
+                }
+
+                if (!_running) return;
+
                 Console.WriteLine($"[Executing] Задача {task.GuidIndex} виконується {task.ExecutionTimeMs} мс");
                 task.Action?.Invoke();
                 Thread.Sleep(task.ExecutionTimeMs);
@@ -124,4 +161,5 @@ public class BufferedThreadPool
             }
         }
     }
+
 }
